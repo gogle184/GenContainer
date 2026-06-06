@@ -1,7 +1,15 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
-};
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.microcms-assets.io',
+      },
+    ],
+  },
+}
 
-export default nextConfig;
+export default nextConfig
