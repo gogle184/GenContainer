@@ -2,15 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { BlogContent } from '@/features/article/types'
-
-function formatDate(iso?: string) {
-  if (!iso) return ''
-  return new Date(iso).toLocaleDateString('ja-JP', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
+import { formatDate } from '@/features/article/lib/formatDate'
 
 export function ArticleCard({ article }: { article: BlogContent }) {
   return (
