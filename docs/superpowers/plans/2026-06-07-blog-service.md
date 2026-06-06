@@ -21,6 +21,7 @@
 5. **microCMSの型**：独自フィールドのみ型に書く。`id`/`createdAt`等は `MicroCMSListContent` がSDK側で合成する。参照フィールドは `& MicroCMSListContent` を付ける。
 6. **リッチテキスト**：`content` はHTML文字列で返る。`dangerouslySetInnerHTML` で描画する（最小構成のためサニタイズはVercelのHTML信頼前提＝自分しか書かないので省略。将来必要なら追加）。
 7. **shadcnのコマンド**：`pnpm dlx shadcn@latest add <component>` でコンポーネントを追加（このプロジェクトは pnpm）。
+8. **SSGメイン（ISR併用）**：動的ルート（articles/categories/tags）には `generateStaticParams` を実装し、ビルド時に全ページを静的生成する。`revalidate: 60`（API層の`customRequestInit`）と組み合わさることで、ビルド後に追加された記事も最大60秒で自動的にページ化される（ISR）。`generateStaticParams` に無いIDも初回アクセス時にオンデマンド生成される（`dynamicParams` のデフォルトが`true`のため）。
 
 ---
 
@@ -898,10 +899,16 @@ export default async function Home() {
 ```tsx
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { getArticleDetail } from '@/features/article/api/getArticles'
+import { getArticleDetail, getArticleList } from '@/features/article/api/getArticles'
 import { ArticleDetailTemplate } from '@/features/article/components/ArticleDetailTemplate'
 
 type Props = { params: Promise<{ id: string }> }
+
+// SSG: ビルド時に全記事ページを静的生成する
+export async function generateStaticParams() {
+  const { contents } = await getArticleList()
+  return contents.map((article) => ({ id: article.id }))
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
@@ -931,10 +938,16 @@ export default async function ArticlePage({ params }: Props) {
 
 ```tsx
 import { notFound } from 'next/navigation'
-import { getArticleList, getCategoryDetail } from '@/features/article/api/getArticles'
+import { getArticleList, getCategoryDetail, getCategoryList } from '@/features/article/api/getArticles'
 import { ArticleListTemplate } from '@/features/article/components/ArticleListTemplate'
 
 type Props = { params: Promise<{ id: string }> }
+
+// SSG: ビルド時に全カテゴリページを静的生成する
+export async function generateStaticParams() {
+  const { contents } = await getCategoryList()
+  return contents.map((category) => ({ id: category.id }))
+}
 
 export default async function CategoryPage({ params }: Props) {
   const { id } = await params
@@ -955,10 +968,16 @@ export default async function CategoryPage({ params }: Props) {
 
 ```tsx
 import { notFound } from 'next/navigation'
-import { getArticleList, getTagDetail } from '@/features/article/api/getArticles'
+import { getArticleList, getTagDetail, getTagList } from '@/features/article/api/getArticles'
 import { ArticleListTemplate } from '@/features/article/components/ArticleListTemplate'
 
 type Props = { params: Promise<{ id: string }> }
+
+// SSG: ビルド時に全タグページを静的生成する
+export async function generateStaticParams() {
+  const { contents } = await getTagList()
+  return contents.map((tag) => ({ id: tag.id }))
+}
 
 export default async function TagPage({ params }: Props) {
   const { id } = await params
