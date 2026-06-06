@@ -26,6 +26,6 @@ test('本文HTMLを描画する', () => {
 
 test('タグへのリンクを持つ', () => {
   render(<ArticleDetailTemplate article={article} />)
-  const link = screen.getByRole('link', { name: 'Next.js' })
+  const link = screen.getByRole('link', { name: /Next\.js/ })
   expect(link).toHaveAttribute('href', '/tags/nextjs')
 })
