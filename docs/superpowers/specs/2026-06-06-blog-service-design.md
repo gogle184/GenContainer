@@ -91,6 +91,50 @@
 | アイコン（☰など） | lucide-react（Menu等） | 導入済み |
 | 記事カード | Card | 一覧の見栄えを楽に整える |
 
+## ディレクトリ構成（featureベース）
+
+責務分離の方針：`app/` はルーティング配線のみに薄く保ち、UI・hooksは `features/` のドメイン配下に集約する。
+これによりNext.jsを起動せずにコンポーネント単体テスト/UIテストが可能になる。
+
+> ⚠️ 命名の注意: `app/` 配下に `template.tsx` という名前は**使わない**。
+> これはNext.jsの予約ファイル（ページ移動ごとに再マウントする特殊挙動）で意図と衝突する。
+> Templateコンポーネント（Atomic Design的なページUI集約層）は `features/` 配下に
+> `XxxTemplate.tsx` の名前で置く。
+
+```
+app/                              ← ルーティング専用（薄く保つ）
+├─ layout.tsx                     ← 共通ヘッダー（常時表示＝layoutが正解）
+├─ page.tsx                       → <ArticleListTemplate /> をimportするだけ
+├─ articles/[id]/page.tsx         → <ArticleDetailTemplate id={id} />
+├─ categories/[id]/page.tsx       → <CategoryTemplate id={id} />
+└─ tags/[id]/page.tsx             → <TagTemplate id={id} />
+
+features/                         ← ドメインごとに掘り下げる本体
+└─ article/                       ← 「記事」ドメイン
+   ├─ components/
+   │  ├─ ArticleListTemplate.tsx  ← 一覧ページのUI集約（テスト対象）
+   │  ├─ ArticleDetailTemplate.tsx← 詳細ページのUI集約
+   │  ├─ ArticleCard.tsx          ← 部品
+   │  └─ ArticleContent.tsx       ← リッチテキスト本文の描画
+   ├─ hooks/                      ← このドメイン用のhooks
+   ├─ api/
+   │  └─ getArticles.ts           ← microCMSから記事取得（この層に閉じ込める）
+   └─ types.ts                    ← 記事の型定義
+
+components/                       ← 横断的に使う共通UI
+├─ ui/                            ← shadcn（button.tsx 等）※自動生成、原則触らない
+└─ layout/
+   └─ Header.tsx                  ← ヘッダー本体（Sheetでハンバーガー）
+
+lib/
+├─ microcms.ts                    ← microCMSクライアント（接続設定の1か所）
+└─ utils.ts                       ← cn() ※shadcn既存
+```
+
+- `app/` は配線だけ。テスト対象UIは `features/` 側に集約。
+- ドメイン（article）ごとにフォルダを掘る。カテゴリ/タグが育てば `features/category/` のように追加。
+- microCMSアクセスは `features/article/api/` または `lib/microcms.ts` に閉じ込め、UIはデータ取得方法を知らない（モックしてテスト容易）。
+
 ## データの流れ
 
 ```
